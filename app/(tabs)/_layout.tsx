@@ -20,16 +20,40 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) =><IconSymbol size={28} name="house" color={color} />,
+        }} 
+      />
+      <Tabs.Screen
+        name="movie"
+        options={{
+          title: 'Movies',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="play" color={color} />,
+        }}
+      />
+
+       <Tabs.Screen
+        name="tv_series"
+        options={{
+          title: 'TV series',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="folder" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="watch_list"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Watch List',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bookmark" color={color} />,
         }}
       />
+
+       <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="more" color={color} />,
+        }}
+      />
+    
     </Tabs>
   );
 }
