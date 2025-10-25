@@ -1,148 +1,148 @@
-// services/api/tvApi.ts
-const API_KEY = 'fd6254a194e5a064e27a9f3d730fe4f7';
-const BASE_URL = 'https://api.themoviedb.org/3';
+import {
+  SearchResponse,
+  TrendingResponse
+} from '../../types/api';
+import {
+  Movie,
+  MovieCredits,
+  MovieDetails,
+  MovieReviews,
+  MovieVideos
+} from '../../types/movie';
 
-// TV Series Interfaces
-export interface TVSeries {
-  id: number;
-  name: string;
-  poster_path: string | null;
-  vote_average: number;
-  first_air_date: string;
-  overview: string;
-  backdrop_path: string | null;
-  genre_ids?: number[];
-  popularity: number;
-  vote_count: number;
-  original_language: string;
-  original_name: string;
-  origin_country: string[];
-}
+import {
+  Season,
+  TVSeries,
+  TVSeriesDetails
+} from '../../types/tv';
 
-export interface TVSeriesDetails extends TVSeries {
-  genres: Genre[];
-  episode_run_time: number[];
-  number_of_episodes: number;
-  number_of_seasons: number;
-  seasons: Season[];
-  status: string;
-  tagline: string;
-  type: string;
-  last_air_date: string;
-  homepage: string;
-}
-
-export interface Genre {
-  id: number;
-  name: string;
-}
-
-export interface Season {
-  id: number;
-  name: string;
-  episode_count: number;
-  season_number: number;
-  air_date: string;
-  overview: string;
-  poster_path: string | null;
-}
-
-export interface Episode {
-  id: number;
-  name: string;
-  episode_number: number;
-  season_number: number;
-  overview: string;
-  air_date: string;
-  runtime: number;
-  vote_average: number;
-  vote_count: number;
-  still_path: string | null;
-}
+import { httpClient } from './http-client';
 
 // API Functions
-export const tvApi = {
+export const tmdbApi = {
+    // Get trending movies
+    getTrendingMovies: async (timeWindow: 'day' | 'week' = 'week'): Promise<TrendingResponse<Movie>> => {
+      return httpClient.get(`/trending/movie/${timeWindow}`);
+    },
+  
+    // Get popular movies
+    getPopularMovies: async (page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/popular?page=${page}`);
+    },
+  
+    // Get top rated movies
+    getTopRatedMovies: async (page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/top_rated?page=${page}`);
+    },
+  
+    // Get movie details by ID
+    getMovieDetails: async (movieId: number): Promise<MovieDetails> => {
+      return httpClient.get(`/movie/${movieId}`);
+    },
+  
+    // Search movies
+    searchMovies: async (query: string, page: number = 1): Promise<SearchResponse<Movie>> => {
+      const encodedQuery = encodeURIComponent(query);
+      return httpClient.get(`/search/movie?query=${encodedQuery}&page=${page}`);
+    },
+  
+    // Get similar movies
+    getSimilarMovies: async (movieId: number, page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/${movieId}/similar?page=${page}`);
+    },
+  
+    // Get movie recommendations
+    getMovieRecommendations: async (movieId: number, page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/${movieId}/recommendations?page=${page}`);
+    },
+  
+    // Get movie credits
+    getMovieCredits: async (movieId: number): Promise<MovieCredits> => {
+      return httpClient.get(`/movie/${movieId}/credits`);
+    },
+  
+    // Get movie videos (trailers, clips, etc.)
+    getMovieVideos: async (movieId: number): Promise<MovieVideos> => {
+      return httpClient.get(`/movie/${movieId}/videos`);
+    },
+  
+    // Get movie reviews
+    getMovieReviews: async (movieId: number, page: number = 1): Promise<MovieReviews> => {
+      return httpClient.get(`/movie/${movieId}/reviews?page=${page}`);
+    },
+  
+    // Get now playing movies
+    getNowPlayingMovies: async (page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/now_playing?page=${page}`);
+    },
+  
+    // Get upcoming movies
+    getUpcomingMovies: async (page: number = 1): Promise<SearchResponse<Movie>> => {
+      return httpClient.get(`/movie/upcoming?page=${page}`);
+    },
   // Get popular TV series
-  getPopular: async (): Promise<TVSeries[]> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=en-US&page=1`
-      );
-      const data = await response.json();
-      return data.results || [];
-    } catch (error) {
-      console.error('Error fetching popular TV series:', error);
-      return [];
-    }
+  getPopularTV: async (page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/popular?page=${page}`);
   },
 
   // Get top rated TV series
-  getTopRated: async (): Promise<TVSeries[]> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/tv/top_rated?api_key=${API_KEY}&language=en-US&page=1`
-      );
-      const data = await response.json();
-      return data.results || [];
-    } catch (error) {
-      console.error('Error fetching top rated TV series:', error);
-      return [];
-    }
+  getTopRatedTV: async (page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/top_rated?page=${page}`);
   },
 
   // Get trending TV series
-  getTrending: async (): Promise<TVSeries[]> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&language=en-US`
-      );
-      const data = await response.json();
-      return data.results || [];
-    } catch (error) {
-      console.error('Error fetching trending TV series:', error);
-      return [];
-    }
+  getTrendingTV: async (timeWindow: 'day' | 'week' = 'week'): Promise<TrendingResponse<TVSeries>> => {
+    return httpClient.get(`/trending/tv/${timeWindow}`);
   },
 
   // Search TV series
-  searchTV: async (query: string): Promise<TVSeries[]> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/search/tv?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
-      );
-      const data = await response.json();
-      return data.results || [];
-    } catch (error) {
-      console.error('Error searching TV series:', error);
-      return [];
-    }
+  searchTV: async (query: string, page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    const encodedQuery = encodeURIComponent(query);
+    return httpClient.get(`/search/tv?query=${encodedQuery}&page=${page}`);
   },
 
   // Get TV series details
-  getTVDetails: async (id: number): Promise<TVSeriesDetails | null> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=en-US`
-      );
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching TV details:', error);
-      return null;
-    }
+  getTVDetails: async (id: number): Promise<TVSeriesDetails> => {
+    return httpClient.get(`/tv/${id}`);
   },
 
   // Get season episodes
-  getSeasonEpisodes: async (tvId: number, seasonNumber: number): Promise<Episode[]> => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/tv/${tvId}/season/${seasonNumber}?api_key=${API_KEY}&language=en-US`
-      );
-      const data = await response.json();
-      return data.episodes || [];
-    } catch (error) {
-      console.error('Error fetching season episodes:', error);
-      return [];
-    }
+  getSeasonEpisodes: async (tvId: number, seasonNumber: number): Promise<Season> => {
+    return httpClient.get(`/tv/${tvId}/season/${seasonNumber}`);
+  },
+
+  // Get TV series credits
+  getTVCredits: async (tvId: number) => {
+    return httpClient.get(`/tv/${tvId}/credits`);
+  },
+
+  // Get TV series videos
+  getTVVideos: async (tvId: number) => {
+    return httpClient.get(`/tv/${tvId}/videos`);
+  },
+
+  // Get TV series reviews
+  getTVReviews: async (tvId: number, page: number = 1) => {
+    return httpClient.get(`/tv/${tvId}/reviews?page=${page}`);
+  },
+
+  // Get similar TV series
+  getSimilarTV: async (tvId: number, page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/${tvId}/similar?page=${page}`);
+  },
+
+  // Get TV series recommendations
+  getTVRecommendations: async (tvId: number, page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/${tvId}/recommendations?page=${page}`);
+  },
+
+  // Get TV series on the air
+  getOnTheAirTV: async (page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/on_the_air?page=${page}`);
+  },
+
+  // Get TV series airing today
+  getAiringTodayTV: async (page: number = 1): Promise<SearchResponse<TVSeries>> => {
+    return httpClient.get(`/tv/airing_today?page=${page}`);
   },
 };
