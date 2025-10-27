@@ -2,15 +2,31 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## 🎬 React Native Movie App
+
+A modern movie and TV series browsing app built with React Native, Expo, and the TMDB API.
+
 ## Get started
 
-1. Install dependencies
+### 1. Install dependencies
 
    ```bash
    npm install
    ```
 
-2. Start the app
+### 2. Setup TMDB API
+
+   1. Get your API key from [The Movie Database (TMDB)](https://www.themoviedb.org/settings/api)
+   2. Create a `.env` file in the root directory:
+      ```bash
+      cp .env.example .env
+      ```
+   3. Add your API key to `.env`:
+      ```
+      EXPO_PUBLIC_TMDB_API_KEY=your_api_key_here
+      ```
+
+### 3. Start the app
 
    ```bash
    npx expo start
