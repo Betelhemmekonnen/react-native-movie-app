@@ -1,4 +1,8 @@
 // components/tv/tv-details.tsx
+import { useWatchlist } from '@/hooks/use-storage';
+import { tmdbApi } from '@/services/api/tmdb';
+import { Episode, TVSeriesDetails } from '@/types/tv';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,7 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Episode, tvApi, TVSeriesDetails } from '@/services/api/tmdb';
 import { EpisodeList } from './episode-list';
 
 const { width } = Dimensions.get('window');
@@ -30,6 +33,10 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Episodes');
+  
+  // Watchlist hook
+  const { isInWatchlist, toggleWatchlist } = useWatchlist(seriesId);
 
   useEffect(() => {
     loadSeriesDetails();
@@ -44,7 +51,7 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
   const loadSeriesDetails = async () => {
     try {
       setLoading(true);
-      const seriesData = await tvApi.getTVDetails(seriesId);
+      const seriesData = await tmdbApi.getTVDetails(seriesId);
       setSeries(seriesData);
     } catch (error) {
       console.error('Error loading series details:', error);
@@ -55,10 +62,16 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
 
   const loadSeasonEpisodes = async () => {
     try {
-      const episodesData = await tvApi.getSeasonEpisodes(seriesId, selectedSeason);
-      setEpisodes(episodesData);
+      const seasonData = await tmdbApi.getSeasonEpisodes(seriesId, selectedSeason);
+      setEpisodes(seasonData.episodes || []);
     } catch (error) {
       console.error('Error loading episodes:', error);
+    }
+  };
+
+  const handleToggleWatchlist = async () => {
+    if (series) {
+      await toggleWatchlist(series);
     }
   };
 
@@ -80,85 +93,176 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
   }
 
   const backdropUrl = series.backdrop_path 
-    ? `https://image.tmdb.org/t/p/w780${series.backdrop_path}`
-    : 'https://via.placeholder.com/780x439/333/fff?text=No+Image';
+    ? `https://image.tmdb.org/t/p/w1280${series.backdrop_path}`
+    : 'https://via.placeholder.com/1280x720/333/fff?text=No+Image';
+
+  const posterUrl = series.poster_path
+    ? `https://image.tmdb.org/t/p/w342${series.poster_path}`
+    : 'https://via.placeholder.com/342x513/333/fff?text=No+Poster';
+
+  const tabs = ['Episodes', 'Overview', 'Casts', 'Related'];
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Backdrop Image */}
-        <Image
-          source={{ uri: backdropUrl }}
-          style={styles.backdrop}
-          resizeMode="cover"
-        />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Backdrop with Gradient Overlay */}
+        <View style={styles.backdropContainer}>
+          <Image
+            source={{ uri: backdropUrl }}
+            style={styles.backdrop}
+            resizeMode="cover"
+          />
+          <View style={styles.gradientOverlay} />
+          
+          {/* Back Button & Cast Icon */}
+          <View style={styles.topBar}>
+            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+              <Ionicons name="chevron-back" size={28} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.castButton}>
+              <Ionicons name="tv-outline" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-        {/* Header with Back Button */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
+        {/* Poster & Title Section */}
+        <View style={styles.headerSection}>
+          <Image
+            source={{ uri: posterUrl }}
+            style={styles.poster}
+            resizeMode="cover"
+          />
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>{series.name}</Text>
+            <View style={styles.metaRow}>
+              <Ionicons name="star" size={16} color="#e6ff00" />
+              <Text style={styles.rating}>{series.vote_average?.toFixed(1)}</Text>
+              <Text style={styles.voteCount}>({series.vote_count} voted)</Text>
+              <Text style={styles.metaDot}>•</Text>
+              <Text style={styles.year}>{series.first_air_date?.split('-')[0]}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.watchButton}>
+            <Ionicons name="play" size={24} color="#000" />
+            <Text style={styles.watchButtonText}>Watch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.episodeListButton}>
+            <Ionicons name="list" size={24} color="#000" />
+            <Text style={styles.episodeListButtonText}>Episode List</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Series Info */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.title}>{series.name}</Text>
-          
-          <View style={styles.metaContainer}>
-            <Text style={styles.rating}>⭐ {series.vote_average?.toFixed(1)}</Text>
-            <Text style={styles.metaText}>•</Text>
-            <Text style={styles.metaText}>
-              {series.first_air_date?.split('-')[0]}
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.actionItem} onPress={handleToggleWatchlist}>
+            <Ionicons 
+              name={isInWatchlist ? "bookmark" : "bookmark-outline"} 
+              size={24} 
+              color={isInWatchlist ? "#e6ff00" : "#fff"} 
+            />
+            <Text style={[styles.actionText, isInWatchlist && styles.actionTextActive]}>
+              {isInWatchlist ? 'In List' : 'Add List'}
             </Text>
-            <Text style={styles.metaText}>•</Text>
-            <Text style={styles.metaText}>
-              {series.number_of_seasons} Season{series.number_of_seasons !== 1 ? 's' : ''}
-            </Text>
-          </View>
-
-          <Text style={styles.overview}>{series.overview}</Text>
-
-          {/* Genres */}
-          <View style={styles.genresContainer}>
-            {series.genres?.map((genre) => (
-              <View key={genre.id} style={styles.genreTag}>
-                <Text style={styles.genreText}>{genre.name}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Season Selector */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.seasonSelector}
-          >
-            {Array.from({ length: series.number_of_seasons }, (_, i) => i + 1).map((seasonNum) => (
-              <TouchableOpacity
-                key={seasonNum}
-                style={[
-                  styles.seasonButton,
-                  selectedSeason === seasonNum && styles.seasonButtonActive
-                ]}
-                onPress={() => setSelectedSeason(seasonNum)}
-              >
-                <Text style={[
-                  styles.seasonButtonText,
-                  selectedSeason === seasonNum && styles.seasonButtonTextActive
-                ]}>
-                  Season {seasonNum}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <Ionicons name="logo-youtube" size={24} color="#fff" />
+            <Text style={styles.actionText}>Trailer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <Ionicons name="share-social-outline" size={24} color="#fff" />
+            <Text style={styles.actionText}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem}>
+            <Ionicons name="flag-outline" size={24} color="#fff" />
+            <Text style={styles.actionText}>Report</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Episodes List */}
-        <EpisodeList 
-          episodes={episodes} 
-          seasonNumber={selectedSeason}
-          onEpisodePress={onEpisodePress}
-        />
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={styles.tab}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === tab && styles.tabTextActive
+              ]}>
+                {tab}
+              </Text>
+              {activeTab === tab && <View style={styles.tabIndicator} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab Content */}
+        {activeTab === 'Episodes' && (
+          <View style={styles.tabContent}>
+            {/* Season Selector */}
+            <TouchableOpacity style={styles.seasonSelector}>
+              <View>
+                <Text style={styles.seasonTitle}>Season {selectedSeason}</Text>
+                <Text style={styles.seasonSubtitle}>
+                  {episodes.length} episodes / Released {series.first_air_date?.split('-')[0]}
+                </Text>
+              </View>
+              <Ionicons name="chevron-down" size={24} color="#fff" />
+            </TouchableOpacity>
+
+            {/* Episodes List */}
+            <EpisodeList 
+              episodes={episodes} 
+              seasonNumber={selectedSeason}
+              onEpisodePress={onEpisodePress}
+            />
+          </View>
+        )}
+
+        {activeTab === 'Overview' && (
+          <View style={styles.tabContent}>
+            <Text style={styles.overviewText}>{series.overview}</Text>
+            
+            {/* Genres */}
+            <View style={styles.genresContainer}>
+              {series.genres?.map((genre) => (
+                <View key={genre.id} style={styles.genreTag}>
+                  <Text style={styles.genreText}>{genre.name}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Status:</Text>
+              <Text style={styles.infoValue}>{series.status}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Seasons:</Text>
+              <Text style={styles.infoValue}>{series.number_of_seasons}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Episodes:</Text>
+              <Text style={styles.infoValue}>{series.number_of_episodes}</Text>
+            </View>
+          </View>
+        )}
+
+        {activeTab === 'Casts' && (
+          <View style={styles.tabContent}>
+            <Text style={styles.comingSoon}>Cast information coming soon...</Text>
+          </View>
+        )}
+
+        {activeTab === 'Related' && (
+          <View style={styles.tabContent}>
+            <Text style={styles.comingSoon}>Related shows coming soon...</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -186,59 +290,204 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  backdrop: {
+  backdropContainer: {
     width: width,
-    height: width * 0.5625, // 16:9 aspect ratio
-    position: 'absolute',
-    top: 0,
+    height: width * 0.6,
+    position: 'relative',
   },
-  header: {
+  backdrop: {
+    width: '100%',
+    height: '100%',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  topBar: {
     position: 'absolute',
     top: 50,
-    left: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     zIndex: 10,
   },
   backButton: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  castButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  infoContainer: {
-    marginTop: width * 0.5625 - 40,
-    padding: 16,
-    backgroundColor: '#000',
+  headerSection: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: -60,
+    zIndex: 5,
+  },
+  poster: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    backgroundColor: '#333',
+  },
+  titleSection: {
+    flex: 1,
+    marginLeft: 16,
+    justifyContent: 'flex-end',
+    paddingBottom: 8,
   },
   title: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  metaContainer: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   rating: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+    marginLeft: 4,
   },
-  metaText: {
-    color: '#ccc',
+  voteCount: {
+    color: '#888',
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  metaDot: {
+    color: '#888',
     fontSize: 14,
-    marginHorizontal: 6,
+    marginHorizontal: 8,
   },
-  overview: {
+  year: {
     color: '#fff',
     fontSize: 14,
-    lineHeight: 20,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 24,
+    gap: 12,
+  },
+  watchButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#e6ff00',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  watchButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  episodeListButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  episodeListButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 24,
+    justifyContent: 'space-around',
+  },
+  actionItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  actionTextActive: {
+    color: '#e6ff00',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  tab: {
+    marginRight: 32,
+    paddingBottom: 12,
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#e6ff00',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#e6ff00',
+  },
+  tabContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+  },
+  seasonSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  seasonTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  seasonSubtitle: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  overviewText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 22,
     marginBottom: 16,
   },
   genresContainer: {
@@ -258,25 +507,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
   },
-  seasonSelector: {
-    marginBottom: 16,
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
   },
-  seasonButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    marginRight: 8,
+  infoLabel: {
+    color: '#888',
+    fontSize: 14,
+    width: 100,
   },
-  seasonButtonActive: {
-    backgroundColor: '#e50914',
-  },
-  seasonButtonText: {
+  infoValue: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    flex: 1,
   },
-  seasonButtonTextActive: {
-    color: '#fff',
+  comingSoon: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 32,
   },
 });

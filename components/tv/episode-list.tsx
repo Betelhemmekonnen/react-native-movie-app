@@ -1,8 +1,7 @@
 // components/tv/episode-list.tsx
-import { Episode } from '@/services/api/tmdb';
+import { Episode } from '@/types/tv';
 import React from 'react';
 import {
-  FlatList,
   Image,
   StyleSheet,
   Text,
@@ -21,13 +20,14 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
   seasonNumber, 
   onEpisodePress 
 }) => {
-  const renderEpisodeItem = ({ item, index }: { item: Episode; index: number }) => {
+  const renderEpisodeItem = (item: Episode, index: number) => {
     const imageUrl = item.still_path 
       ? `https://image.tmdb.org/t/p/w400${item.still_path}`
       : 'https://via.placeholder.com/300x169/333/fff?text=No+Image';
 
     return (
       <TouchableOpacity
+        key={item.id}
         style={styles.episodeContainer}
         onPress={() => onEpisodePress?.(item)}
         activeOpacity={0.7}
@@ -58,15 +58,17 @@ export const EpisodeList: React.FC<EpisodeListProps> = ({
     );
   };
 
+  if (!episodes || episodes.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.emptyText}>No episodes available</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.seasonTitle}>Season {seasonNumber}</Text>
-      <FlatList
-        data={episodes}
-        renderItem={renderEpisodeItem}
-        keyExtractor={(item) => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-      />
+      {episodes.map((episode, index) => renderEpisodeItem(episode, index))}
     </View>
   );
 };
@@ -75,6 +77,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  emptyText: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 32,
   },
   seasonTitle: {
     color: '#fff',
