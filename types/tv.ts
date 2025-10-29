@@ -34,14 +34,15 @@ export interface TVSeries {
   }
   
   export interface Season {
-	id: number;
-	name: string;
-	episode_count: number;
-	season_number: number;
-	air_date: string;
-	overview: string;
-	poster_path: string | null;
-  }
+  id: number;
+  name: string;
+  episode_count: number;
+  season_number: number;
+  air_date: string;
+  overview: string;
+  poster_path: string | null;
+  episodes?: Episode[];
+}
   
   export interface Episode {
 	id: number;

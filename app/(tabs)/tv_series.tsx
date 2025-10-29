@@ -1,8 +1,9 @@
-// app/tv_series.tsx
+// app/(tabs)/tv_series.tsx
 import { TVNavbar } from '@/components/tv/top-bar';
 import { TVDetails } from '@/components/tv/tv-details';
 import { TVList } from '@/components/tv/tv-list';
-import { TVSeries, tvApi } from '@/services/api/tmdb';
+import { tmdbApi } from '@/services/api/tmdb';
+import { Episode, TVSeries } from '@/types/tv';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,121 +11,124 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
-  View,
+  View
 } from 'react-native';
 
 export default function TVSeriesScreen() {
-  const [popularTV, setPopularTV] = useState<TVSeries[]>([]);
-  const [topRatedTV, setTopRatedTV] = useState<TVSeries[]>([]);
-  const [trendingTV, setTrendingTV] = useState<TVSeries[]>([]);
-  const [selectedSeries, setSelectedSeries] = useState<TVSeries | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Latest');
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tvShows, setTvShows] = useState<TVSeries[]>([]);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadTVSeries();
-  }, []);
-
-  const loadTVSeries = async () => {
+  // Fetch TV shows based on active tab
+  const fetchTVShows = async () => {
     try {
       setLoading(true);
-      const [popular, topRated, trending] = await Promise.all([
-        tvApi.getPopular(),
-        tvApi.getTopRated(),
-        tvApi.getTrending(),
-      ]);
-      
-      setPopularTV(popular);
-      setTopRatedTV(topRated);
-      setTrendingTV(trending);
+      let data: TVSeries[] = [];
+
+      switch (activeTab) {
+        case 'Latest':
+          const latestResponse = await tmdbApi.getAiringTodayTV(1);
+          data = latestResponse.results;
+          break;
+        case 'Trending':
+          const trendingResponse = await tmdbApi.getTrendingTV('week');
+          data = trendingResponse.results;
+          break;
+        case 'Popular':
+          const popularResponse = await tmdbApi.getPopularTV(1);
+          data = popularResponse.results;
+          break;
+        default:
+          const defaultResponse = await tmdbApi.getAiringTodayTV(1);
+          data = defaultResponse.results;
+      }
+
+      setTvShows(data);
     } catch (error) {
-      console.error('Error loading TV series:', error);
+      console.error('Error fetching TV shows:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  const onRefresh = () => {
+  useEffect(() => {
+    fetchTVShows();
+  }, [activeTab]);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadTVSeries();
+    await fetchTVShows();
+    setRefreshing(false);
   };
 
   const handleSeriesPress = (series: TVSeries) => {
-    setSelectedSeries(series);
+    setSelectedSeriesId(series.id);
   };
 
-  const handleBack = () => {
-    setSelectedSeries(null);
+  const handleBackPress = () => {
+    setSelectedSeriesId(null);
   };
 
-  const handleEpisodePress = (episode: any) => {
+  const handleEpisodePress = (episode: Episode) => {
     console.log('Episode pressed:', episode.name);
-    // Handle episode playback
+    // Navigate to episode player or details
   };
 
-  if (selectedSeries) {
+  const handleTabChange = (tab: string) => {
+    if (tab === 'Filter') {
+      console.log('Open filter modal');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  // Show TV Details if a series is selected
+  if (selectedSeriesId) {
     return (
-      <TVDetails 
-        seriesId={selectedSeries.id}
-        onBack={handleBack}
+      <TVDetails
+        seriesId={selectedSeriesId}
+        onBack={handleBackPress}
         onEpisodePress={handleEpisodePress}
       />
     );
   }
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>Loading TV Series...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <TVNavbar title="TV Series" onFilterPress={() => console.log('Filter pressed')} />
       <StatusBar barStyle="light-content" />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#fff"
-            colors={['#fff']}
-          />
-        }
-      >
-        {/* Trending Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔥 Trending Now</Text>
-          <TVList 
-            data={trendingTV.slice(0, 6)} 
-            onItemPress={handleSeriesPress}
-          />
-        </View>
+      
+      {/* Navigation Bar */}
+      <TVNavbar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
-        {/* Popular Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📺 Popular Series</Text>
+      {/* Loading Indicator */}
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#e50914" />
+        </View>
+      ) : (
+        /* TV Series List */
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              colors={["#fff"]}
+            />
+          }
+        >
           <TVList 
-            data={popularTV} 
+            data={tvShows} 
             onItemPress={handleSeriesPress}
           />
-        </View>
-
-        {/* Top Rated Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⭐ Top Rated</Text>
-          <TVList 
-            data={topRatedTV} 
-            onItemPress={handleSeriesPress}
-          />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -134,28 +138,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  scrollView: {
-    flex: 1,
-  },
-  center: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
-  },
-  loadingText: {
-    color: '#fff',
-    marginTop: 16,
-    fontSize: 16,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    paddingHorizontal: 16,
   },
 });
