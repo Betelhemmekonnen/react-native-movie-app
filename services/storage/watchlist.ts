@@ -1,60 +1,176 @@
-// services/storage/watchlist.ts
-import { TVSeries, TVSeriesDetails } from '@/types/tv';
-import { storage, STORAGE_KEYS } from './async-storage';
+import { Movie } from '../../types/movie';
+import { StorageService } from './async-storage';
 
-export interface WatchlistItem {
-  id: number;
-  name: string;
-  poster_path: string | null;
-  vote_average: number;
-  first_air_date: string;
-  overview: string;
-  backdrop_path: string | null;
-  addedAt: number; // timestamp
+// Storage keys
+const WATCHLIST_KEY = 'watchlist';
+
+// Types for stored watchlist
+export interface WatchlistMovie extends Movie {
+  addedAt: string; // ISO date string
 }
 
-export const watchlistService = {
-  async getWatchlist(): Promise<WatchlistItem[]> {
-    const watchlist = await storage.getItem<WatchlistItem[]>(STORAGE_KEYS.WATCHLIST);
-    return watchlist || [];
-  },
+export interface WatchlistData {
+  movies: Record<number, WatchlistMovie>;
+  lastUpdated: string;
+}
 
-  async addToWatchlist(series: TVSeries | TVSeriesDetails): Promise<void> {
-    const watchlist = await this.getWatchlist();
+/**
+ * Service for managing movie watchlist
+ */
+export class WatchlistService {
+  /**
+   * Get all watchlist data
+   */
+  static async getWatchlist(): Promise<WatchlistData> {
+    const watchlist = await StorageService.getItem<WatchlistData>(WATCHLIST_KEY);
     
-    // Check if already in watchlist
-    const exists = watchlist.some(item => item.id === series.id);
-    if (exists) {
-      return;
+    if (!watchlist) {
+      return {
+        movies: {},
+        lastUpdated: new Date().toISOString(),
+      };
     }
+    
+    return watchlist;
+  }
 
-    const newItem: WatchlistItem = {
-      id: series.id,
-      name: series.name,
-      poster_path: series.poster_path,
-      vote_average: series.vote_average,
-      first_air_date: series.first_air_date,
-      overview: series.overview,
-      backdrop_path: series.backdrop_path,
-      addedAt: Date.now(),
-    };
+  /**
+   * Add a movie to watchlist
+   * @param movie - Movie to add
+   * @returns Promise<boolean> - Success status
+   */
+  static async addMovie(movie: Movie): Promise<boolean> {
+    try {
+      const watchlist = await this.getWatchlist();
+      
+      const watchlistMovie: WatchlistMovie = {
+        ...movie,
+        addedAt: new Date().toISOString(),
+      };
+      
+      watchlist.movies[movie.id] = watchlistMovie;
+      watchlist.lastUpdated = new Date().toISOString();
+      
+      return await StorageService.setItem(WATCHLIST_KEY, watchlist);
+    } catch (error) {
+      console.error('WatchlistService.addMovie error:', error);
+      return false;
+    }
+  }
 
-    const updatedWatchlist = [newItem, ...watchlist];
-    await storage.setItem(STORAGE_KEYS.WATCHLIST, updatedWatchlist);
-  },
+  /**
+   * Remove a movie from watchlist by ID
+   * @param movieId - Movie ID to remove
+   * @returns Promise<boolean> - Success status
+   */
+  static async removeMovie(movieId: number): Promise<boolean> {
+    try {
+      const watchlist = await this.getWatchlist();
+      
+      if (watchlist.movies[movieId]) {
+        delete watchlist.movies[movieId];
+        watchlist.lastUpdated = new Date().toISOString();
+        return await StorageService.setItem(WATCHLIST_KEY, watchlist);
+      }
+      
+      return true; // Already not in watchlist
+    } catch (error) {
+      console.error('WatchlistService.removeMovie error:', error);
+      return false;
+    }
+  }
 
-  async removeFromWatchlist(seriesId: number): Promise<void> {
-    const watchlist = await this.getWatchlist();
-    const filtered = watchlist.filter(item => item.id !== seriesId);
-    await storage.setItem(STORAGE_KEYS.WATCHLIST, filtered);
-  },
+  /**
+   * Check if a movie is in watchlist
+   * @param movieId - Movie ID to check
+   * @returns Promise<boolean> - Whether movie is in watchlist
+   */
+  static async isMovieInWatchlist(movieId: number): Promise<boolean> {
+    try {
+      const watchlist = await this.getWatchlist();
+      return !!watchlist.movies[movieId];
+    } catch (error) {
+      console.error('WatchlistService.isMovieInWatchlist error:', error);
+      return false;
+    }
+  }
 
-  async isInWatchlist(seriesId: number): Promise<boolean> {
-    const watchlist = await this.getWatchlist();
-    return watchlist.some(item => item.id === seriesId);
-  },
+  /**
+   * Get all watchlist movies as an array
+   * @returns Promise<WatchlistMovie[]> - Array of watchlist movies
+   */
+  static async getWatchlistMovies(): Promise<WatchlistMovie[]> {
+    try {
+      const watchlist = await this.getWatchlist();
+      return Object.values(watchlist.movies).sort((a, b) => 
+        new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime()
+      );
+    } catch (error) {
+      console.error('WatchlistService.getWatchlistMovies error:', error);
+      return [];
+    }
+  }
 
-  async clearWatchlist(): Promise<void> {
-    await storage.setItem(STORAGE_KEYS.WATCHLIST, []);
-  },
-};
+  /**
+   * Get watchlist movie IDs as an array
+   * @returns Promise<number[]> - Array of watchlist movie IDs
+   */
+  static async getWatchlistMovieIds(): Promise<number[]> {
+    try {
+      const watchlist = await this.getWatchlist();
+      return Object.keys(watchlist.movies).map(Number);
+    } catch (error) {
+      console.error('WatchlistService.getWatchlistMovieIds error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Toggle movie watchlist status
+   * @param movie - Movie to toggle
+   * @returns Promise<boolean> - New watchlist status (true if added, false if removed)
+   */
+  static async toggleMovieWatchlist(movie: Movie): Promise<boolean> {
+    const isInWatchlist = await this.isMovieInWatchlist(movie.id);
+    
+    if (isInWatchlist) {
+      await this.removeMovie(movie.id);
+      return false;
+    } else {
+      await this.addMovie(movie);
+      return true;
+    }
+  }
+
+  /**
+   * Clear all watchlist
+   * @returns Promise<boolean> - Success status
+   */
+  static async clearAllWatchlist(): Promise<boolean> {
+    try {
+      const emptyWatchlist: WatchlistData = {
+        movies: {},
+        lastUpdated: new Date().toISOString(),
+      };
+      
+      return await StorageService.setItem(WATCHLIST_KEY, emptyWatchlist);
+    } catch (error) {
+      console.error('WatchlistService.clearAllWatchlist error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get watchlist count
+   * @returns Promise<number> - Number of movies in watchlist
+   */
+  static async getWatchlistCount(): Promise<number> {
+    try {
+      const watchlist = await this.getWatchlist();
+      return Object.keys(watchlist.movies).length;
+    } catch (error) {
+      console.error('WatchlistService.getWatchlistCount error:', error);
+      return 0;
+    }
+  }
+}
