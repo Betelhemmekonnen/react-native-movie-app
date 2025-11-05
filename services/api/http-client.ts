@@ -1,4 +1,4 @@
-const BASE_URL = "https://api.themoviedb.org/3";
+const BASE_URL = process.env.EXPO_PUBLIC_TMDB_BASE_URL || "https://api.themoviedb.org/3";
 
 const API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
 export const httpClient = {
