@@ -1,13 +1,13 @@
 // components/tv/episode-list.tsx
-import { Episode } from '@/services/api/tmdb';
+import { Episode } from '@/types/tv';
 import React from 'react';
 import {
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface EpisodeListProps {

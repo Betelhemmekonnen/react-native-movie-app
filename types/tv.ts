@@ -41,6 +41,7 @@ export interface TVSeries {
 	air_date: string;
 	overview: string;
 	poster_path: string | null;
+	episodes?: Episode[];
   }
   
   export interface Episode {

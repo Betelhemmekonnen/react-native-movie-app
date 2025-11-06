@@ -146,3 +146,6 @@ export const tmdbApi = {
     return httpClient.get(`/tv/airing_today?page=${page}`);
   },
 };
+
+export { TVSeries };
+

@@ -2,129 +2,150 @@
 import { TVNavbar } from '@/components/tv/top-bar';
 import { TVDetails } from '@/components/tv/tv-details';
 import { TVList } from '@/components/tv/tv-list';
-import { TVSeries, tvApi } from '@/services/api/tmdb';
+import { useTVShows } from '@/hooks/use-tv-shows';
+import { Episode, TVSeries } from '@/types/tv';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    StatusBar,
+    StyleSheet,
+    View,
 } from 'react-native';
 
 export default function TVSeriesScreen() {
-  const [popularTV, setPopularTV] = useState<TVSeries[]>([]);
-  const [topRatedTV, setTopRatedTV] = useState<TVSeries[]>([]);
-  const [trendingTV, setTrendingTV] = useState<TVSeries[]>([]);
-  const [selectedSeries, setSelectedSeries] = useState<TVSeries | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Latest');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadTVSeries();
-  }, []);
+  const {
+    trendingTV,
+    popularTV,
+    airingTodayTV,
+    loadingTrending,
+    loadingPopular,
+    loadingAiringToday,
+    fetchTrendingTV,
+    fetchPopularTV,
+    fetchAiringTodayTV,
+  } = useTVShows();
 
-  const loadTVSeries = async () => {
-    try {
-      setLoading(true);
-      const [popular, topRated, trending] = await Promise.all([
-        tvApi.getPopular(),
-        tvApi.getTopRated(),
-        tvApi.getTrending(),
-      ]);
-      
-      setPopularTV(popular);
-      setTopRatedTV(topRated);
-      setTrendingTV(trending);
-    } catch (error) {
-      console.error('Error loading TV series:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  // Get the current TV shows list based on active tab
+  const getCurrentTVShows = (): TVSeries[] => {
+    switch (activeTab) {
+      case 'Latest':
+        return airingTodayTV;
+      case 'Trending':
+        return trendingTV;
+      case 'Popular':
+        return popularTV;
+      default:
+        return airingTodayTV;
     }
   };
 
-  const onRefresh = () => {
+  const getCurrentLoading = (): boolean => {
+    switch (activeTab) {
+      case 'Latest':
+        return loadingAiringToday;
+      case 'Trending':
+        return loadingTrending;
+      case 'Popular':
+        return loadingPopular;
+      default:
+        return loadingAiringToday;
+    }
+  };
+
+  // Fetch data when tab changes
+  useEffect(() => {
+    switch (activeTab) {
+      case 'Latest':
+        fetchAiringTodayTV(1);
+        break;
+      case 'Trending':
+        fetchTrendingTV();
+        break;
+      case 'Popular':
+        fetchPopularTV(1);
+        break;
+    }
+  }, [activeTab, fetchAiringTodayTV, fetchTrendingTV, fetchPopularTV]);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadTVSeries();
+    switch (activeTab) {
+      case 'Latest':
+        await fetchAiringTodayTV(1);
+        break;
+      case 'Trending':
+        await fetchTrendingTV();
+        break;
+      case 'Popular':
+        await fetchPopularTV(1);
+        break;
+    }
+    setRefreshing(false);
   };
 
   const handleSeriesPress = (series: TVSeries) => {
-    setSelectedSeries(series);
+    setSelectedSeriesId(series.id);
   };
 
-  const handleBack = () => {
-    setSelectedSeries(null);
+  const handleBackPress = () => {
+    setSelectedSeriesId(null);
   };
 
-  const handleEpisodePress = (episode: any) => {
+  const handleEpisodePress = (episode: Episode) => {
     console.log('Episode pressed:', episode.name);
-    // Handle episode playback
+    // Navigate to episode player or details
   };
 
-  if (selectedSeries) {
+  const handleTabChange = (tab: string) => {
+    if (tab === 'Filter') {
+      console.log('Open filter modal');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  const tvShows = getCurrentTVShows();
+  const loading = getCurrentLoading();
+
+  // Show TV Details if a series is selected
+  if (selectedSeriesId) {
     return (
-      <TVDetails 
-        seriesId={selectedSeries.id}
-        onBack={handleBack}
+      <TVDetails
+        seriesId={selectedSeriesId}
+        onBack={handleBackPress}
         onEpisodePress={handleEpisodePress}
       />
     );
   }
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>Loading TV Series...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <TVNavbar title="TV Series" onFilterPress={() => console.log('Filter pressed')} />
       <StatusBar barStyle="light-content" />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#fff"
-            colors={['#fff']}
-          />
-        }
-      >
-        {/* Trending Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔥 Trending Now</Text>
-          <TVList 
-            data={trendingTV.slice(0, 6)} 
-            onItemPress={handleSeriesPress}
-          />
-        </View>
+      
+      {/* Navigation Bar */}
+      <TVNavbar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
-        {/* Popular Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📺 Popular Series</Text>
-          <TVList 
-            data={popularTV} 
-            onItemPress={handleSeriesPress}
-          />
+      {/* Loading Indicator */}
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#e50914" />
         </View>
-
-        {/* Top Rated Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⭐ Top Rated</Text>
-          <TVList 
-            data={topRatedTV} 
-            onItemPress={handleSeriesPress}
-          />
-        </View>
-      </ScrollView>
+      ) : (
+        /* TV Series List */
+        <TVList 
+          data={tvShows} 
+          onItemPress={handleSeriesPress}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      )}
     </View>
   );
 }
@@ -134,28 +155,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  scrollView: {
-    flex: 1,
-  },
-  center: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
-  },
-  loadingText: {
-    color: '#fff',
-    marginTop: 16,
-    fontSize: 16,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    paddingHorizontal: 16,
   },
 });
