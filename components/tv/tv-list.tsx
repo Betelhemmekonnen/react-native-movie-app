@@ -1,9 +1,10 @@
 // components/tv/tv-list.tsx
-import { TVSeries } from '@/services/api/tmdb';
+import { TVSeries } from '@/types/tv';
 import React from 'react';
 import {
   Dimensions,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -17,9 +18,17 @@ interface TVListProps {
   data: TVSeries[];
   onItemPress: (series: TVSeries) => void;
   title?: string;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-export const TVList: React.FC<TVListProps> = ({ data, onItemPress, title }) => {
+export const TVList: React.FC<TVListProps> = ({ 
+  data, 
+  onItemPress, 
+  title,
+  refreshing = false,
+  onRefresh,
+}) => {
   return (
     <View style={styles.container}>
       {title && <Text style={styles.sectionTitle}>{title}</Text>}
@@ -37,6 +46,16 @@ export const TVList: React.FC<TVListProps> = ({ data, onItemPress, title }) => {
         numColumns={NUM_COLUMNS}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              colors={["#fff"]}
+            />
+          ) : undefined
+        }
       />
     </View>
   );

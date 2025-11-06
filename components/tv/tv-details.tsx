@@ -1,16 +1,17 @@
 // components/tv/tv-details.tsx
+import { tmdbApi } from '@/services/api/tmdb';
+import { Episode, TVSeriesDetails } from '@/types/tv';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Episode, tvApi, TVSeriesDetails } from '@/services/api/tmdb';
 import { EpisodeList } from './episode-list';
 
 const { width } = Dimensions.get('window');
@@ -44,7 +45,7 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
   const loadSeriesDetails = async () => {
     try {
       setLoading(true);
-      const seriesData = await tvApi.getTVDetails(seriesId);
+      const seriesData = await tmdbApi.getTVDetails(seriesId);
       setSeries(seriesData);
     } catch (error) {
       console.error('Error loading series details:', error);
@@ -55,8 +56,8 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
 
   const loadSeasonEpisodes = async () => {
     try {
-      const episodesData = await tvApi.getSeasonEpisodes(seriesId, selectedSeason);
-      setEpisodes(episodesData);
+      const seasonData = await tmdbApi.getSeasonEpisodes(seriesId, selectedSeason);
+      setEpisodes(seasonData.episodes || []);
     } catch (error) {
       console.error('Error loading episodes:', error);
     }

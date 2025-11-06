@@ -1,13 +1,13 @@
 // components/tv/tv-card.tsx
-import { TVSeries } from '@/services/api/tmdb';
+import { TVSeries } from '@/types/tv';
 import React from 'react';
 import {
-  Dimensions,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
