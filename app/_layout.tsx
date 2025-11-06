@@ -3,6 +3,12 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+// Import your custom context providers
+import { FavoritesProvider } from '@/context/favorites-context';
+import { MovieProvider } from '@/context/movie-context';
+import { ThemeProvider as CustomThemeProvider } from '@/context/theme-context';
+import { WatchlistProvider } from '@/context/watchlist-context';
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
@@ -13,12 +19,21 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    // Wrap everything with your custom context providers
+    <CustomThemeProvider>
+      <FavoritesProvider>
+        <WatchlistProvider>
+          <MovieProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </MovieProvider>
+        </WatchlistProvider>
+      </FavoritesProvider>
+    </CustomThemeProvider>
   );
 }
