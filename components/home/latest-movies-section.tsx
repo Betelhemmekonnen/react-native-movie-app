@@ -16,12 +16,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.35;
 const CARD_HEIGHT = CARD_WIDTH * 1.5;
 
-interface TrendingSectionProps {
+interface LatestMoviesSectionProps {
   movies: Movie[];
   onViewAll?: () => void;
 }
 
-export function TrendingSection({ movies, onViewAll }: TrendingSectionProps) {
+export function LatestMoviesSection({ movies, onViewAll }: LatestMoviesSectionProps) {
   const router = useRouter();
 
   const getImageUrl = (path: string | null) => {
@@ -36,7 +36,7 @@ export function TrendingSection({ movies, onViewAll }: TrendingSectionProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.sectionTitle}>Trending</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Latest movies</ThemedText>
         {onViewAll && (
           <TouchableOpacity onPress={onViewAll} activeOpacity={0.7}>
             <ThemedText style={styles.viewAllText}>View all</ThemedText>

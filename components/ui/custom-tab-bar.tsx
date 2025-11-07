@@ -6,16 +6,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-/**
- * Alternative tab bar component - simpler version of custom-tab-bar
- * Use this if you want a more basic tab bar without the green background on active tab
- */
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.dark.background }]}>
+    <View style={styles.container}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -60,7 +56,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             case 'watchlist':
               return 'bookmark';
             case 'more':
-              return 'menu';
+              return 'heart';
             default:
               return 'ellipse';
           }
@@ -86,16 +82,22 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             style={styles.tab}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name={iconName as any}
-              size={24}
-              color={iconColor}
-            />
+            <View
+              style={[
+                styles.iconContainer,
+                isFocused && styles.activeIconContainer,
+              ]}
+            >
+              <Ionicons
+                name={iconName as any}
+                size={24}
+                color={isFocused ? '#000' : iconColor}
+              />
+            </View>
             <ThemedText
               style={[
                 styles.label,
-                { color: textColor },
-                isFocused && styles.labelActive,
+                { color: isFocused ? Colors.dark.accent : textColor },
               ]}
             >
               {label}
@@ -110,6 +112,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    backgroundColor: Colors.dark.background,
     paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 20 : 8,
     borderTopWidth: 1,
@@ -122,12 +125,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeIconContainer: {
+    backgroundColor: Colors.dark.accent,
+    borderRadius: 8,
+  },
   label: {
     fontSize: 12,
     fontWeight: '500',
-  },
-  labelActive: {
-    fontWeight: 'bold',
   },
 });
 

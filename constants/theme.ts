@@ -5,8 +5,11 @@
 
 import { Platform } from 'react-native';
 
+// OnStream app color scheme
 const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorDark = '#32CD32'; // Lime green accent color
+const onStreamGreen = '#32CD32'; // Lime green
+const onStreamYellowGreen = '#ADFF2F'; // Yellow-green for secondary actions
 
 export const Colors = {
   light: {
@@ -18,12 +21,16 @@ export const Colors = {
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
+    text: '#FFFFFF',
+    background: '#000000', // Pure black background
+    tint: onStreamGreen,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    tabIconSelected: onStreamGreen,
+    accent: onStreamGreen,
+    secondaryAccent: onStreamYellowGreen,
+    cardBackground: '#1A1A1A',
+    border: '#2A2A2A',
   },
 };
 
