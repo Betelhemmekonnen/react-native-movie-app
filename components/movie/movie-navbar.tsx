@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: Colors.dark.accent,
+    backgroundColor: Colors.dark.secondaryAccent, // Yellowish color
   },
   filterTab: {
     minWidth: 50,
@@ -131,4 +131,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

@@ -1,115 +1,121 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import React from 'react';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   return (
-    <View style={styles.container}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name;
+    <SafeAreaView edges={['bottom']} style={styles.safeArea}>
+      <View style={styles.container}>
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const label =
+            options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+              ? options.title
+              : route.name;
 
-        const isFocused = state.index === index;
+          const isFocused = state.index === index;
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-        const onLongPress = () => {
-          navigation.emit({
-            type: 'tabLongPress',
-            target: route.key,
-          });
-        };
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
 
-        // Icon mapping
-        const getIconName = (routeName: string) => {
-          switch (routeName) {
-            case 'index':
-              return 'home';
-            case 'movie':
-            case 'movies':
-              return 'play-circle';
-            case 'tv_series':
-              return 'folder';
-            case 'watch_list':
-            case 'watchlist':
-              return 'bookmark';
-            case 'more':
-              return 'heart';
-            default:
-              return 'ellipse';
-          }
-        };
+          // Icon mapping
+          const getIconName = (routeName: string) => {
+            switch (routeName) {
+              case 'index':
+                return 'home';
+              case 'movie':
+              case 'movies':
+                return 'play-circle';
+              case 'tv_series':
+                return 'folder';
+              case 'watch_list':
+              case 'watchlist':
+                return 'bookmark';
+              case 'more':
+                return 'heart';
+              default:
+                return 'ellipse';
+            }
+          };
 
-        const iconName = getIconName(route.name);
-        const iconColor = isFocused
-          ? (isDark ? Colors.dark.accent : Colors.light.tint)
-          : Colors.dark.tabIconDefault;
-        const textColor = isFocused
-          ? (isDark ? Colors.dark.accent : Colors.light.tint)
-          : Colors.dark.tabIconDefault;
+          const iconName = getIconName(route.name);
+          const iconColor = isFocused
+            ? '#000'
+            : (isDark ? Colors.dark.tabIconDefault : Colors.light.tabIconDefault);
+          const textColor = isFocused
+            ? '#000'
+            : (isDark ? Colors.dark.tabIconDefault : Colors.light.tabIconDefault);
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={styles.tab}
-            activeOpacity={0.7}
-          >
-            <View
-              style={[
-                styles.iconContainer,
-                isFocused && styles.activeIconContainer,
-              ]}
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.tab}
+              activeOpacity={0.7}
             >
-              <Ionicons
-                name={iconName as any}
-                size={24}
-                color={isFocused ? '#000' : iconColor}
-              />
-            </View>
-            <ThemedText
-              style={[
-                styles.label,
-                { color: isFocused ? Colors.dark.accent : textColor },
-              ]}
-            >
-              {label}
-            </ThemedText>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+              <View
+                style={[
+                  styles.iconContainer,
+                  isFocused && styles.activeIconContainer,
+                ]}
+              >
+                <Ionicons
+                  name={iconName as any}
+                  size={24}
+                  color={isFocused ? '#000' : iconColor}
+                />
+              </View>
+              <ThemedText
+                style={[
+                  styles.label,
+                  { color: isFocused ? '#000' : textColor },
+                ]}
+              >
+                {label}
+              </ThemedText>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: Colors.dark.background,
+  },
   container: {
     flexDirection: 'row',
     backgroundColor: Colors.dark.background,
@@ -133,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeIconContainer: {
-    backgroundColor: Colors.dark.accent,
+    backgroundColor: Colors.dark.secondaryAccent, // Yellowish color
     borderRadius: 8,
   },
   label: {
@@ -141,4 +147,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

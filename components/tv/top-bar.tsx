@@ -1,4 +1,5 @@
 // components/tv/top-bar.tsx
+import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -28,7 +29,7 @@ export const TVNavbar: React.FC<TVNavbarProps> = ({
       <View style={styles.header}>
         <Text style={styles.title}>TV Series</Text>
         <TouchableOpacity>
-          <Ionicons name="search" size={24} color="#fff" />
+          <Ionicons name="search" size={24} color={Colors.dark.text} />
         </TouchableOpacity>
       </View>
 
@@ -50,7 +51,7 @@ export const TVNavbar: React.FC<TVNavbarProps> = ({
             onPress={() => onTabChange(tab)}
           >
             {tab === 'Filter' ? (
-              <Ionicons name="filter" size={16} color={activeTab === tab ? '#000' : '#fff'} />
+              <Ionicons name="filter" size={16} color={activeTab === tab ? '#000' : Colors.dark.text} />
             ) : (
               <Text
                 style={[
@@ -70,7 +71,7 @@ export const TVNavbar: React.FC<TVNavbarProps> = ({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#000',
+    backgroundColor: Colors.dark.background,
   },
   header: {
     flexDirection: 'row',
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   title: {
-    color: '#fff',
+    color: Colors.dark.text,
     fontSize: 28,
     fontWeight: 'bold',
   },
@@ -96,20 +97,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
-    backgroundColor: '#333',
+    backgroundColor: Colors.dark.cardBackground,
     minWidth: 80,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabActive: {
-    backgroundColor: '#e6ff00',
+    backgroundColor: Colors.dark.secondaryAccent, // Yellowish color from theme
   },
   filterTab: {
     minWidth: 50,
     paddingHorizontal: 16,
   },
   tabText: {
-    color: '#fff',
+    color: Colors.dark.text,
     fontSize: 14,
     fontWeight: '600',
   },

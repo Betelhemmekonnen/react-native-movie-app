@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { FavoritesProvider } from '@/context/favorites-context';
 import { MovieProvider } from '@/context/movie-context';
 import { ThemeProvider as CustomThemeProvider } from '@/context/theme-context';
+import { TVProvider } from '@/context/tv-context';
 import { WatchlistProvider } from '@/context/watchlist-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -24,18 +25,20 @@ export default function RootLayout() {
       <FavoritesProvider>
         <WatchlistProvider>
           <MovieProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="(stack)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: false }} />
-              </Stack>
-              <StatusBar style="auto" />
-            </ThemeProvider>
+            <TVProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(stack)" options={{ headerShown: false }} />
+                  <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', headerShown: false }} />
+                </Stack>
+                <StatusBar style="auto" />
+              </ThemeProvider>
+            </TVProvider>
           </MovieProvider>
         </WatchlistProvider>
       </FavoritesProvider>

@@ -2,14 +2,15 @@
 import { TVNavbar } from '@/components/tv/top-bar';
 import { TVDetails } from '@/components/tv/tv-details';
 import { TVList } from '@/components/tv/tv-list';
-import { useTVShows } from '@/hooks/use-tv-shows';
+import { Colors } from '@/constants/theme';
+import { useTVContext } from '@/context/tv-context';
 import { Episode, TVSeries } from '@/types/tv';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    StatusBar,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  StatusBar,
+  StyleSheet,
+  View,
 } from 'react-native';
 
 export default function TVSeriesScreen() {
@@ -27,7 +28,7 @@ export default function TVSeriesScreen() {
     fetchTrendingTV,
     fetchPopularTV,
     fetchAiringTodayTV,
-  } = useTVShows();
+  } = useTVContext();
 
   // Get the current TV shows list based on active tab
   const getCurrentTVShows = (): TVSeries[] => {
@@ -135,7 +136,7 @@ export default function TVSeriesScreen() {
       {/* Loading Indicator */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#e50914" />
+          <ActivityIndicator size="large" color={Colors.dark.accent} />
         </View>
       ) : (
         /* TV Series List */
@@ -153,12 +154,12 @@ export default function TVSeriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: Colors.dark.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: Colors.dark.background,
   },
 });
