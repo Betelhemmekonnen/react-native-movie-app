@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  ActivityIndicator,
-  StatusBar,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { MovieNavbar } from '@/components/movie/movie-navbar';
 import { MovieGrid } from '@/components/movie/movie-grid';
+import { MovieNavbar } from '@/components/movie/movie-navbar';
+import { Colors } from '@/constants/theme';
 import { useMovieContext } from '@/context/movie-context';
 import { Movie } from '@/types/movie';
-import { Colors } from '@/constants/theme';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    StatusBar,
+    StyleSheet,
+    View,
+} from 'react-native';
 
 type MovieCategory = 'Popular' | 'Top Rated' | 'Now Playing' | 'Upcoming' | 'Trending';
 

@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
-import { Movie } from '@/types/movie';
-import { useRouter } from 'expo-router';
 import { useMovieContext } from '@/context/movie-context';
+import { Movie } from '@/types/movie';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    Dimensions,
+    Image,
+    StyleSheet,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -123,7 +123,7 @@ export function MovieCard({
             <Ionicons
               name={isFavorite ? 'heart' : 'heart-outline'}
               size={18}
-              color={isFavorite ? '#FF4444' : Colors.dark.text}
+              color={isFavorite ? Colors.dark.secondaryAccent : Colors.dark.text} // Yellowish color instead of red
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -134,7 +134,7 @@ export function MovieCard({
             <Ionicons
               name={isInWatchlist ? 'bookmark' : 'bookmark-outline'}
               size={18}
-              color={isInWatchlist ? Colors.dark.accent : Colors.dark.text}
+              color={isInWatchlist ? Colors.dark.secondaryAccent : Colors.dark.text} // Yellowish color instead of red
             />
           </TouchableOpacity>
         </View>
@@ -229,4 +229,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-

@@ -1,11 +1,15 @@
 import { MovieGrid } from '@/components/movie/movie-grid';
 import { ThemedText } from '@/components/themed-text';
+import { TVGrid } from '@/components/tv/tv-grid';
 import { Colors } from '@/constants/theme';
 import { useMovieContext } from '@/context/movie-context';
+import { useTVContext } from '@/context/tv-context';
 import { Movie } from '@/types/movie';
+import { TVSeries } from '@/types/tv';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   StatusBar,
@@ -29,6 +33,13 @@ export default function FavoritesTabScreen() {
     refreshFavorites,
   } = useMovieContext();
 
+  const {
+    favorites: tvFavorites,
+    favoriteIds: tvFavoriteIds,
+    favoritesLoading: tvFavoritesLoading,
+    refreshFavorites: refreshTVFavorites,
+  } = useTVContext();
+
   // Convert favorites to Movie array for MovieGrid
   const favoriteMovies: Movie[] = favorites.map((item) => ({
     id: item.id,
@@ -47,27 +58,59 @@ export default function FavoritesTabScreen() {
     video: item.video,
   }));
 
-  // Refresh favorites on mount
-  useEffect(() => {
-    refreshFavorites();
-  }, [refreshFavorites]);
+  // Convert TV favorites to TVSeries array
+  const favoriteTVSeries: TVSeries[] = tvFavorites.map((item) => ({
+    id: item.id,
+    name: item.name,
+    overview: item.overview,
+    poster_path: item.poster_path,
+    backdrop_path: item.backdrop_path,
+    first_air_date: item.first_air_date,
+    vote_average: item.vote_average,
+    vote_count: item.vote_count,
+    genre_ids: item.genre_ids,
+    original_language: item.original_language,
+    original_name: item.original_name,
+    popularity: item.popularity,
+    origin_country: item.origin_country,
+  }));
+
+  // Refresh favorites when tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshFavorites();
+      refreshTVFavorites();
+    }, [refreshFavorites, refreshTVFavorites])
+  );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refreshFavorites();
+      if (activeCategory === 'Movie') {
+        await refreshFavorites();
+      } else {
+        await refreshTVFavorites();
+      }
     } catch (error) {
       console.error('Error refreshing favorites:', error);
     } finally {
       setRefreshing(false);
     }
-  }, [refreshFavorites]);
+  }, [activeCategory, refreshFavorites, refreshTVFavorites]);
 
   // Handle movie press
   const handleMoviePress = useCallback(
     (movie: Movie) => {
       router.push(`/details/${movie.id}`);
+    },
+    [router]
+  );
+
+  // Handle TV series press
+  const handleTVSeriesPress = useCallback(
+    (series: TVSeries) => {
+      router.push(`/tv/details/${series.id}` as any);
     },
     [router]
   );
@@ -148,14 +191,31 @@ export default function FavoritesTabScreen() {
         </>
       )}
 
-      {/* TV Series - Empty for now (user's friend's task) */}
       {activeCategory === 'TV Series' && (
-        <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyTitle}>Coming soon</ThemedText>
-          <ThemedText style={styles.emptyText}>
-            TV Series favorites will be available soon.
-          </ThemedText>
-        </View>
+        <>
+          {tvFavoritesLoading && favoriteTVSeries.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={Colors.dark.accent} />
+            </View>
+          ) : favoriteTVSeries.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <ThemedText style={styles.emptyTitle}>Your TV favorites list is empty</ThemedText>
+              <ThemedText style={styles.emptyText}>
+                Start adding TV series to your favorites by tapping the heart icon on any TV series card.
+              </ThemedText>
+            </View>
+          ) : (
+            <TVGrid
+              series={favoriteTVSeries}
+              loading={false}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              onSeriesPress={handleTVSeriesPress}
+              numColumns={3}
+              emptyMessage="No favorite TV series found"
+            />
+          )}
+        </>
       )}
     </SafeAreaView>
   );
@@ -196,7 +256,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#9BA1A6',
+    color: Colors.dark.tabIconDefault,
   },
   activeTabText: {
     color: Colors.dark.secondaryAccent,
@@ -232,7 +292,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9BA1A6',
+    color: Colors.dark.tabIconDefault,
     textAlign: 'center',
     lineHeight: 24,
   },

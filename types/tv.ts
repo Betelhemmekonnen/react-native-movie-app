@@ -26,6 +26,14 @@ export interface TVSeries {
 	type: string;
 	last_air_date: string;
 	homepage: string;
+	created_by?: Creator[];
+	networks?: Network[];
+	production_companies?: ProductionCompany[];
+  }
+  
+  export interface TVSeriesCredits {
+	cast: Cast[];
+	crew: Crew[];
   }
   
   export interface Genre {
@@ -55,4 +63,37 @@ export interface TVSeries {
 	vote_average: number;
 	vote_count: number;
 	still_path: string | null;
+  }
+  
+  export interface Creator {
+	id: number;
+	name: string;
+  }
+  
+  export interface Network {
+	id: number;
+	name: string;
+	logo_path: string | null;
+	origin_country: string;
+  }
+  
+  export interface ProductionCompany {
+	id: number;
+	name: string;
+	logo_path: string | null;
+	origin_country: string;
+  }
+  
+  export interface Cast {
+	id: number;
+	name: string;
+	profile_path: string | null;
+	character: string;
+  }
+  
+  export interface Crew {
+	id: number;
+	name: string;
+	job: string;
+	department: string;
   }

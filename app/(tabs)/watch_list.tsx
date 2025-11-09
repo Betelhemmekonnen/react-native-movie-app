@@ -1,11 +1,15 @@
 import { MovieGrid } from '@/components/movie/movie-grid';
 import { ThemedText } from '@/components/themed-text';
+import { TVGrid } from '@/components/tv/tv-grid';
 import { Colors } from '@/constants/theme';
 import { useMovieContext } from '@/context/movie-context';
+import { useTVContext } from '@/context/tv-context';
 import { Movie } from '@/types/movie';
+import { TVSeries } from '@/types/tv';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   StatusBar,
@@ -15,7 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type WatchlistCategory = 'Movie' | 'TV Series' | 'Trakt';
+type WatchlistCategory = 'Movie' | 'TV Series';
 
 export default function WatchListScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -28,6 +32,13 @@ export default function WatchListScreen() {
     watchlistLoading,
     refreshWatchlist,
   } = useMovieContext();
+
+  const {
+    watchlist: tvWatchlist,
+    watchlistIds: tvWatchlistIds,
+    watchlistLoading: tvWatchlistLoading,
+    refreshWatchlist: refreshTVWatchlist,
+  } = useTVContext();
 
   // Convert watchlist to Movie array for MovieGrid
   const watchlistMovies: Movie[] = watchlist.map((item) => ({
@@ -47,22 +58,46 @@ export default function WatchListScreen() {
     video: item.video,
   }));
 
-  // Refresh watchlist on mount
-  useEffect(() => {
-    refreshWatchlist();
-  }, [refreshWatchlist]);
+  // Convert TV watchlist to TVSeries array
+  const watchlistTVSeries: TVSeries[] = tvWatchlist.map((item) => ({
+    id: item.id,
+    name: item.name,
+    overview: item.overview,
+    poster_path: item.poster_path,
+    backdrop_path: item.backdrop_path,
+    first_air_date: item.first_air_date,
+    vote_average: item.vote_average,
+    vote_count: item.vote_count,
+    genre_ids: item.genre_ids,
+    original_language: item.original_language,
+    original_name: item.original_name,
+    popularity: item.popularity,
+    origin_country: item.origin_country,
+  }));
+
+  // Refresh watchlist when tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshWatchlist();
+      refreshTVWatchlist();
+    }, [refreshWatchlist, refreshTVWatchlist])
+  );
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refreshWatchlist();
+      if (activeCategory === 'Movie') {
+        await refreshWatchlist();
+      } else {
+        await refreshTVWatchlist();
+      }
     } catch (error) {
       console.error('Error refreshing watchlist:', error);
     } finally {
       setRefreshing(false);
     }
-  }, [refreshWatchlist]);
+  }, [activeCategory, refreshWatchlist, refreshTVWatchlist]);
 
   // Handle movie press
   const handleMoviePress = useCallback(
@@ -72,12 +107,20 @@ export default function WatchListScreen() {
     [router]
   );
 
+  // Handle TV series press
+  const handleTVSeriesPress = useCallback(
+    (series: TVSeries) => {
+      router.push(`/tv/details/${series.id}` as any);
+    },
+    [router]
+  );
+
   // Handle category change
   const handleCategoryChange = useCallback((category: WatchlistCategory) => {
     setActiveCategory(category);
   }, []);
 
-  const categories: WatchlistCategory[] = ['Movie', 'TV Series', 'Trakt'];
+  const categories: WatchlistCategory[] = ['Movie', 'TV Series'];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -148,14 +191,31 @@ export default function WatchListScreen() {
         </>
       )}
 
-      {/* TV Series and Trakt - Empty for now (user's friend's task) */}
-      {(activeCategory === 'TV Series' || activeCategory === 'Trakt') && (
-        <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyTitle}>Coming soon</ThemedText>
-          <ThemedText style={styles.emptyText}>
-            {activeCategory} watchlist will be available soon.
-          </ThemedText>
-        </View>
+      {activeCategory === 'TV Series' && (
+        <>
+          {tvWatchlistLoading && watchlistTVSeries.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={Colors.dark.accent} />
+            </View>
+          ) : watchlistTVSeries.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <ThemedText style={styles.emptyTitle}>Your TV watchlist is empty</ThemedText>
+              <ThemedText style={styles.emptyText}>
+                Start adding TV series to your watchlist by tapping the bookmark icon on any TV series card.
+              </ThemedText>
+            </View>
+          ) : (
+            <TVGrid
+              series={watchlistTVSeries}
+              loading={false}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              onSeriesPress={handleTVSeriesPress}
+              numColumns={3}
+              emptyMessage="No TV series in watchlist"
+            />
+          )}
+        </>
       )}
     </SafeAreaView>
   );
@@ -196,7 +256,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#9BA1A6',
+    color: Colors.dark.tabIconDefault,
   },
   activeTabText: {
     color: Colors.dark.secondaryAccent,
@@ -232,7 +292,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#9BA1A6',
+    color: Colors.dark.tabIconDefault,
     textAlign: 'center',
     lineHeight: 24,
   },
