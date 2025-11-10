@@ -18,9 +18,10 @@ const ITEM_WIDTH = (width - 48) / 3;
 interface TVCardProps {
   series: TVSeries;
   onPress: (series: TVSeries) => void;
+  containerStyle?: any;
 }
 
-export const TVCard: React.FC<TVCardProps> = ({ series, onPress }) => {
+export const TVCard: React.FC<TVCardProps> = ({ series, onPress, containerStyle }) => {
   const { favoriteIds, watchlistIds, toggleFavorite, toggleWatchlist } = useTVContext();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
@@ -49,7 +50,7 @@ export const TVCard: React.FC<TVCardProps> = ({ series, onPress }) => {
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, containerStyle]}
       onPress={() => onPress(series)}
       activeOpacity={0.7}
     >
