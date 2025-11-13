@@ -8,6 +8,7 @@ import { Episode, TVSeries } from '@/types/tv';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StatusBar,
   StyleSheet,
   View,
@@ -97,13 +98,24 @@ export default function TVSeriesScreen() {
   };
 
   const handleEpisodePress = (episode: Episode) => {
-    console.log('Episode pressed:', episode.name);
-    // Navigate to episode player or details
+    // Navigate to episode details or show episode info
+    // For now, we'll show an alert with episode info
+    // You can implement a full episode player screen later
+    if (selectedSeriesId) {
+      // Show episode details in a modal or navigate to episode screen
+      Alert.alert(
+        episode.name || 'Episode',
+        `${episode.overview || 'No description available'}\n\nRating: ⭐ ${episode.vote_average?.toFixed(1) || 'N/A'}`,
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleTabChange = (tab: string) => {
     if (tab === 'Filter') {
-      console.log('Open filter modal');
+      // Filter functionality can be added here if needed
+      // For now, we'll just ignore it
+      return;
     } else {
       setActiveTab(tab);
     }

@@ -331,6 +331,7 @@ export default function MovieDetailsScreen() {
                 showRating={false}
                 onMoviePress={handleMoviePress}
                 emptyMessage="No similar movies found"
+                scrollEnabled={false}
               />
             )}
 
@@ -343,6 +344,7 @@ export default function MovieDetailsScreen() {
                 showRating={false}
                 onMoviePress={handleMoviePress}
                 emptyMessage="No recommendations found"
+                scrollEnabled={false}
               />
             )}
           </View>

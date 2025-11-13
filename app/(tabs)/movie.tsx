@@ -3,7 +3,7 @@ import { MovieNavbar } from '@/components/movie/movie-navbar';
 import { Colors } from '@/constants/theme';
 import { useMovieContext } from '@/context/movie-context';
 import { Movie } from '@/types/movie';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -15,9 +15,19 @@ import {
 type MovieCategory = 'Popular' | 'Top Rated' | 'Now Playing' | 'Upcoming' | 'Trending';
 
 export default function MovieTabScreen() {
-  const [activeTab, setActiveTab] = useState<MovieCategory>('Popular');
+  const params = useLocalSearchParams<{ category?: string }>();
+  const [activeTab, setActiveTab] = useState<MovieCategory>(
+    (params.category as MovieCategory) || 'Popular'
+  );
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+
+  // Update active tab when params change
+  useEffect(() => {
+    if (params.category) {
+      setActiveTab(params.category as MovieCategory);
+    }
+  }, [params.category]);
 
   const {
     // Data
@@ -199,8 +209,9 @@ export default function MovieTabScreen() {
   // Handle tab change
   const handleTabChange = useCallback((tab: string) => {
     if (tab === 'Filter') {
-      console.log('Open filter modal');
-      // You can implement filter modal here
+      // Filter functionality can be added here if needed
+      // For now, we'll just ignore it
+      return;
     } else {
       setActiveTab(tab as MovieCategory);
     }
