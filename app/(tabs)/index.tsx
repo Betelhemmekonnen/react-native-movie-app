@@ -121,15 +121,21 @@ export default function HomeScreen() {
 
   // Handle view all trending
   const handleViewAllTrending = useCallback(() => {
-    // Navigate to trending movies screen or show more
-    console.log('View all trending');
-  }, []);
+    // Navigate to movies tab with Trending category selected
+    router.push({
+      pathname: '/movie',
+      params: { category: 'Trending' },
+    });
+  }, [router]);
 
   // Handle view all latest
   const handleViewAllLatest = useCallback(() => {
-    // Navigate to latest movies screen or show more
-    console.log('View all latest');
-  }, []);
+    // Navigate to movies tab with Now Playing category selected
+    router.push({
+      pathname: '/movie',
+      params: { category: 'Now Playing' },
+    });
+  }, [router]);
 
   // Check if we have any data loaded
   const hasData =

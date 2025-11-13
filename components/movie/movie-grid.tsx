@@ -27,6 +27,7 @@ interface MovieGridProps {
   showRating?: boolean;
   numColumns?: number;
   cardSize?: 'small' | 'medium' | 'large';
+  scrollEnabled?: boolean;
 }
 
 export function MovieGrid({
@@ -41,6 +42,7 @@ export function MovieGrid({
   showRating = false,
   numColumns = 3,
   cardSize = 'small',
+  scrollEnabled = true,
 }: MovieGridProps) {
   const renderItem: ListRenderItem<Movie> = ({ item }) => (
     <MovieCard
@@ -66,6 +68,50 @@ export function MovieGrid({
       </View>
     );
   };
+
+  // When scrollEnabled is false, use View with flexWrap instead of FlatList
+  // to avoid VirtualizedList nesting warning
+  if (!scrollEnabled) {
+    if (movies.length === 0) {
+      return renderEmpty();
+    }
+
+    // Calculate card width based on numColumns
+    const cardWidth = (SCREEN_WIDTH - 32 - (numColumns - 1) * 16) / numColumns;
+
+    return (
+      <View style={styles.container}>
+        <View style={[styles.gridContainer, { flexDirection: 'row', flexWrap: 'wrap' }]}>
+          {movies.map((movie, index) => (
+            <View
+              key={movie.id.toString()}
+              style={[
+                styles.gridItem,
+                {
+                  width: cardWidth,
+                  marginRight: (index + 1) % numColumns === 0 ? 0 : 16,
+                  marginBottom: 16,
+                },
+              ]}
+            >
+              <MovieCard
+                movie={movie}
+                size={cardSize}
+                showHD={showHD}
+                showRating={showRating}
+                onPress={onMoviePress}
+              />
+            </View>
+          ))}
+        </View>
+        {loading && (
+          <View style={styles.footer}>
+            <ActivityIndicator size="small" color={Colors.dark.accent} />
+          </View>
+        )}
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -107,6 +153,12 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  gridContainer: {
+    width: '100%',
+  },
+  gridItem: {
+    // Width and margins are set dynamically
   },
   emptyContainer: {
     flex: 1,

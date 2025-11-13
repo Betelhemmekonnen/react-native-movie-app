@@ -112,9 +112,48 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
     }
   };
 
-  const handleShare = () => {
-    // Implement share functionality
-    console.log('Share TV series');
+  const handleWatchNow = async () => {
+    if (!series) return;
+    
+    // If onEpisodePress is provided, use it to navigate to first episode
+    if (onEpisodePress) {
+      if (series.number_of_seasons > 0 && episodes.length > 0) {
+        const firstEpisode = episodes[0];
+        onEpisodePress(firstEpisode);
+        return;
+      } else {
+        // Try to load first season episodes
+        try {
+          const seasonData = await tmdbApi.getSeasonEpisodes(seriesId, 1);
+          if (seasonData.episodes && seasonData.episodes.length > 0) {
+            onEpisodePress(seasonData.episodes[0]);
+            return;
+          }
+        } catch (error) {
+          console.error('Error loading first episode:', error);
+        }
+      }
+    }
+    
+    // Fallback: Show message that watch functionality would be implemented
+    // In a real app, this would navigate to a video player or streaming service
+    alert(`Watch "${series.name}"\n\nThis would open the video player or streaming service.`);
+  };
+
+  const handleShare = async () => {
+    if (!series) return;
+    
+    try {
+      const { Share } = await import('react-native');
+      const shareMessage = `Check out "${series.name}" on TMDB!\n\n${series.overview || ''}\n\nRating: ⭐ ${series.vote_average.toFixed(1)}/10`;
+      
+      await Share.share({
+        message: shareMessage,
+        title: series.name,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
   };
 
   const formatGenres = () => {
@@ -222,7 +261,7 @@ export const TVDetails: React.FC<TVDetailsProps> = ({
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => console.log('Watch now')}
+            onPress={handleWatchNow}
             activeOpacity={0.7}
           >
             <View style={styles.iconCircle}>

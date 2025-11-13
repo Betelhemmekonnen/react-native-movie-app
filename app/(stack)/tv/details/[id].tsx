@@ -92,9 +92,37 @@ export default function TVDetailsScreen() {
     }
   };
 
-  const handleWatchNow = () => {
-    // For now, we'll just show an alert - you can implement actual trailer functionality
-    alert('Watch now functionality would go here');
+  const handleWatchNow = async () => {
+    // Navigate to first episode or show trailer
+    if (tvSeries && tvSeries.number_of_seasons > 0) {
+      // Try to get the first episode of the first season
+      try {
+        const seasonData = await tmdbApi.getSeasonEpisodes(tvId, 1);
+        if (seasonData.episodes && seasonData.episodes.length > 0) {
+          const firstEpisode = seasonData.episodes[0];
+          // Navigate to episode details or player
+          // For now, we'll show episode info
+          router.push({
+            pathname: '/tv/details/[id]',
+            params: { 
+              id: tvId.toString(),
+              season: '1',
+              episode: firstEpisode.episode_number.toString(),
+            },
+          });
+        } else {
+          // If no episodes, try to show trailer
+          router.push(`/trailer/${tvId}`);
+        }
+      } catch (error) {
+        console.error('Error loading first episode:', error);
+        // Fallback to trailer
+        router.push(`/trailer/${tvId}`);
+      }
+    } else {
+      // If no seasons, try trailer
+      router.push(`/trailer/${tvId}`);
+    }
   };
 
   const handleTVPress = (selectedTV: TVSeries) => {
@@ -316,6 +344,7 @@ export default function TVDetailsScreen() {
                 showRating={false}
                 onMoviePress={handleTVPress as any} // Type assertion for compatibility
                 emptyMessage="No similar TV series found"
+                scrollEnabled={false}
               />
             )}
 
@@ -328,6 +357,7 @@ export default function TVDetailsScreen() {
                 showRating={false}
                 onMoviePress={handleTVPress as any} // Type assertion for compatibility
                 emptyMessage="No recommendations found"
+                scrollEnabled={false}
               />
             )}
           </View>
